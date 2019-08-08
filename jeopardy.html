@@ -1,0 +1,344 @@
+<html>
+    <head>
+        <style>
+            .WhoAreYou{
+                font-family: Georgia, serif;
+                font-size: 25px;
+                letter-spacing: 0px;
+                word-spacing: 1.2px;
+                color: #000000;
+                font-weight: 400;
+                text-decoration: underline solid rgb(68, 68, 68);
+                font-style: normal;
+                font-variant: normal;
+                text-transform: none;
+            }
+            .WaitingPlayers{
+                font-size: 50px;
+            }
+
+            #answerResponse{
+                font-size: 16px;
+            }
+
+            .card{
+                width: 100px;
+                height: 16%;
+                font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;    
+                font-size: 15px;
+                -webkit-box-shadow: 7px 7px 29px 0px rgba(163,12,42,0.65);
+                -moz-box-shadow: 7px 7px 29px 0px rgba(163,12,42,0.65);
+                box-shadow: 7px 7px 29px 0px rgba(163,12,42,0.65);
+            }
+
+            h2{
+                float: center;
+            }
+            .btn{
+                height: 100px;
+                width: 150px;
+                display:inline-block;
+            }
+            p {
+                font-family: Meiryo, "Hiragino Kaku Gothic Pro W3",sans-serif;
+                font-size: 150%;
+                position: absolute;
+                width: 99%;
+            }
+            .AnswerDisplays{
+                float: center;
+            }
+
+            .answerButton {
+                background: #3ba8eb;
+                background-image: -webkit-linear-gradient(top, #3ba8eb, #459ed6);
+                background-image: -moz-linear-gradient(top, #3ba8eb, #459ed6);
+                background-image: -ms-linear-gradient(top, #3ba8eb, #459ed6);
+                background-image: -o-linear-gradient(top, #3ba8eb, #459ed6);
+                background-image: linear-gradient(to bottom, #3ba8eb, #459ed6);
+                -webkit-border-radius: 27;
+                -moz-border-radius: 27;
+                border-radius: 27px;
+                font-family: Courier New;
+                color: #ffffff;
+                font-size: 40px;
+                padding: 10px 20px 10px 20px;
+                text-decoration: none;
+            }
+
+            .answerButton:hover {
+                background: #e6596c;
+                text-decoration: none;
+            }
+            #answerModal{
+                display :"none" !important;
+            }
+
+        </style>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+        <script src = "https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js"></script>
+        <script type = "text\template" id = "template">
+            
+                <button type="button" class="btn btn-info btn-lg" data-toggle="modal" onclick="displayModal('{{category}}','{{id}}','{{answer}}')">{{category}} <br> {{value}}</button>
+                <br>
+            
+        </script>
+        
+        <script>
+            // Initialize Firebase
+            var config = {
+                apiKey: "AIzaSyDn6vSQWWsPiUayHzjqDCL1RFIaU34Kpj0",
+                authDomain: "ad1sa23d1as22d13as132dsa.firebaseapp.com",
+                databaseURL: "https://ad1sa23d1as22d13as132dsa.firebaseio.com",
+                projectId: "ad1sa23d1as22d13as132dsa",
+                storageBucket: "ad1sa23d1as22d13as132dsa.appspot.com",
+                messagingSenderId: "622434890176"
+            };
+            firebase.initializeApp(config);
+            var db = firebase.database();
+            var data;
+            var playerNumber=0;
+
+            //Displays Modal when clicked
+            var displayModal = function(c,id,a){     
+                db.ref().child("buzzed").once('value', function (snapshot) {
+                    if(playerNumber==snapshot.val()){
+                        db.ref().child("WhatQuestion/Category").set(c)
+                        db.ref().child("WhatQuestion/questions").set(id)
+                        console.log(data.questions[c][id].question)
+                        console.log(data.questions[c][id].answer)
+                        $(".modal-body p").html(data.questions[c][id].question);
+                        $('#myModal').modal('show')
+                    }
+                    else{
+                        alert("You are Not Choosing")
+                    }
+                })
+
+            }
+            var answer = function(){
+                db.ref().once('value', function(snapshot){
+                    data = snapshot.val()
+                    var answeringplayer = data.answer.player;
+                    var answerModal =document.getElementById("answerModal");
+                    var WhoIsAnsweringTheQuestion = document.getElementById("WhoIsAnsweringTheQuestion");
+                    if(answeringplayer == 0){
+                        db.ref().child("answer/player").set(playerNumber);
+                        answerModal.style.display = 'block';
+                        WhoIsAnsweringTheQuestion.innerHTML = "You Are Answering!";
+                    }
+                });
+            }
+
+            var SubmitAnswer = function(){
+                var AnswerInput = document.getElementById("AnswerInput");
+                db.ref().once('value',function(snapshot){
+                    data = snapshot.val()
+                    c = data["WhatQuestion"].Category;
+                    id = data["WhatQuestion"].questions
+                    if(AnswerInput = data.questions[c][id].answer){
+                        alert("You are right");
+                    }
+                    else{
+                        alert("you are wrong");
+                    }
+                })
+            }
+
+            //Displays the board & Displays Modal on all screens using data from "WhatQuestion"
+            db.ref().on('value',function(snapshot){
+                data = snapshot.val();
+                displayBoard(data);
+                currentQuestion(data);
+    
+                c = data["WhatQuestion"].Category;
+                id = data["WhatQuestion"].questions
+                if(data["WhatQuestion"].Category != 0 && data["WhatQuestion"].questions != 0){
+                    $(".modal-body p").html(data.questions[c][id].question);
+                    $('#myModal').modal('show')
+                }
+
+                var WhoIsChoosing=document.getElementById("WhoIsChoosing")
+                if(data["buzzed"]!=0){
+                    WhoIsChoosing.innerHTML= data["player" + data["buzzed"]].name + " is choosing"
+                }
+
+                $("#answerResponse").html("<b>" + data["player" + data.answer.player].name + "'s response: " + "</b>" + data.answer.response);
+
+                if(data.answer.player = data.buzzed){
+                    $("#WhoIsAnsweringTheQuestion").html(data["player" + data.answer.player].name + " is answering");
+                }
+
+            });
+
+            function currentQuestion(data){
+                var answeringplayer = data.answer.player;
+                if(answeringplayer != 0 && answeringplayer != playerNumber){
+                    $(".answerButton").css("visibility","hidden");
+                    $("#answerResponse").css("visibility","visible");
+                }
+            }
+
+            //Gets the name from the User and stores it in the database
+            function init(){
+                $("#answerModal").css("display","none");
+                $("#answerResponse").css("visibility","hidden");
+                db.ref().once('value', function(snapshot){
+                    var data = snapshot.val()
+                    var WhoAreYou =document.getElementById("WhoAreYou");
+
+                    if(data["player1"].name == 0 || data["player1"].name == "undefined"){
+                        db.ref("player1/name").set(prompt("Enter name"));
+                        db.ref().child("currentPlayer").set(1);
+                        playerNumber = 1;
+                        WhoAreYou.innerHTML = "You Are Player 1 "
+                        
+                    }
+                    else if(data["player2"].name == 0 || data["player2"].name == "undefined" ){
+                        db.ref("player2/name").set(prompt("Enter name"));
+                        db.ref().child("currentPlayer").set(2);
+                        playerNumber=2;
+                        WhoAreYou.innerHTML = "You Are Player 2 "
+                        
+                    }
+                    else if(data["player3"].name == 0 || data["player3"].name == "undefined"){
+                        db.ref("player3/name").set(prompt("Enter name"));
+                        db.ref().child("currentPlayer").set(3);
+                        playerNumber=3;
+                        WhoAreYou.innerHTML = "You Are Player 3 "
+                        db.ref().child("buzzed").set(1)
+                        
+                    }
+                    else{
+                        alert("Players are Full");
+                        WhoAreYou.innerHTML = "You Are Spectating "
+                        
+                    }
+                });
+            }
+
+            function displayBoard(data){
+                var template = document.getElementById("template").innerHTML;
+                var build="";
+                var categories = ["math","random","science","geography","history","phobias"];
+                var output1 =document.getElementById("output1");
+                var output2 = document.getElementById("output2");
+
+
+                build += "<br><div class='row'>"                
+                for(var i = 0; i < categories.length;i++){
+                    var info = data.questions[categories[i]];
+                    build += "<div class='col-md-2'>"
+                    for(var key in info){
+                        info[key].category = categories[i]
+                        info[key].id = key;
+                        build += Mustache.render(template,info[key])
+                    }
+                    build += "</div>"
+                }
+                build += "</div>"
+
+
+                //Only displays the board when all players have joined
+                if(data["player1"].name != 0 && data["player2"].name != 0 && data["player3"].name != 0){
+                    output2.innerHTML = build;
+                    var WaitingPlayers =document.getElementById("WaitingPlayers");
+                    WaitingPlayers.style.visibility='hidden' 
+                }else{
+                    var WaitingPlayers =document.getElementById("WaitingPlayers");
+                    WaitingPlayers.innerHTML = "<br><br>Waiting for Players...";
+                        
+                }
+
+                
+                build = "";
+                build += "<div> <p align = \"left\" id = \"pp1\">Player 1: "+ data["player1"].name + "</p>";
+                build += "<p align = \"center\"> Player 2: "+ data["player2"].name + "</p>";
+                build += " <p align = \"right\">Player 3: "+ data["player3"].name + "</p> </div> <br>";
+
+                build += "<div><p align = \"left\"> Score: " + data["player1"].score + "</p>"
+                build += "<p align = \"center\"> Score: " + data["player2"].score + "</p>"
+                build += "<p align = \"right\"> Score: " + data["player3"].score + "</p></div>"
+                output1.innerHTML = build;
+
+            }
+
+
+            function updateResponse(){
+                db.ref("answer/response").set($("#AnswerInput").val());
+            }
+
+            
+            function reset(){
+                db.ref("player1/name").set("0");
+                db.ref("player2/name").set("0");
+                db.ref("player3/name").set("0");
+                db.ref("player1/score").set(0);
+                db.ref("player2/score").set(0);
+                db.ref("player3/score").set(0);
+                db.ref().child("buzzed").set(1);
+                db.ref().child("currentPlayer").set(1);
+                db.ref().child("WhatQuestion/Category").set("0");
+                db.ref().child("WhatQuestion/questions").set("0");
+                db.ref("answer/player").set(0);
+                db.ref("answer/response").set("0");
+
+                } 
+ 
+ 
+ </script>
+ 
+
+ 
+ </head>
+    <body onload = "init()">
+        <div id = "WhoIsChoosing" align = "center" class = "WhoAreYou"> </div>
+
+        <div id = "WhoAreYou" align = "center" class = "WhoAreYou"> </div>
+
+        <div id = "output1"> </div>
+
+
+        <br><br>
+        <button onclick="reset()">Reset</button>
+
+        <br>
+        <table style="width:100%">
+
+
+        <div id = "output2" class = "output2"> </div>
+
+        <div class="modal fade" id="myModal" role="dialog">
+            <div class="modal-dialog">
+            
+            <!-- Modal content-->
+                <div class="modal-content">
+                <div class="modal-header">
+                <h2><div id = "WhoIsAnsweringTheQuestion" align = "center"></div></h2>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                <p></p>
+                </div><br><br>
+
+                <br><br><br>
+                <button onclick="answer()" class = "answerButton" align= "center" >Answer</button>
+                <div id="answerResponse" align = "center"></div>
+                    <div class="modal-footer" id = "answerModal">
+                    <div id = "AnswerDisplays" class = "AnswerDisplays" ></div> <br><br><br>
+                    <input id="AnswerInput" type = "text" placeholder = "Enter Your Answer..." onkeydown="updateResponse()">
+                    <button type = "button" onclick = "SubmitAnswer()" class = "btn btn-default"> Submit </button>
+                    </div>
+                </div>
+            
+            </div>
+        </div>
+        
+        <div id = "WaitingPlayers" align = "center" class = "WaitingPlayers"> </div>
+    </body>
+</html>
